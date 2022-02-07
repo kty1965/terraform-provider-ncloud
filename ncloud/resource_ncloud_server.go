@@ -417,6 +417,10 @@ func createVpcServerInstance(d *schema.ResourceData, config *ProviderConfig) (*s
 		return nil, ErrorRequiredArgOnVpc("subnet_no")
 	}
 
+	if _, ok := d.GetOk("access_control_group_configuration_no_list"); ok {
+		NotSupportVpc("`access_control_group_configuration_no_list` of ncloud_server")
+	}
+
 	subnet, err := getSubnetInstance(config, d.Get("subnet_no").(string))
 	if err != nil {
 		return nil, err
