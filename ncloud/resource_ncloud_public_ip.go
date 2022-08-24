@@ -32,7 +32,7 @@ func resourceNcloudPublicIpInstance() *schema.Resource {
 			"server_instance_no": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Computed: true,
+				//Computed: true,
 			},
 			"description": {
 				Type:             schema.TypeString,
@@ -121,6 +121,10 @@ func resourceNcloudPublicIpRead(d *schema.ResourceData, meta interface{}) error 
 	instance := ConvertToMap(resource)
 	SetSingularResourceDataFromMapSchema(resourceNcloudPublicIpInstance(), d, instance)
 	if err := d.Set("public_ip_no", resource.PublicIpInstanceNo); err != nil {
+		return err
+	}
+
+	if err := d.Set("server_instance_no", resource.ServerInstanceNo); err != nil {
 		return err
 	}
 
