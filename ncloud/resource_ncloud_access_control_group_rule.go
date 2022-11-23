@@ -39,6 +39,7 @@ func resourceNcloudAccessControlGroupRule() *schema.Resource {
 							Type:             schema.TypeString,
 							Required:         true,
 							ValidateDiagFunc: ToDiagFunc(validation.StringMatch(regexp.MustCompile(`TCP|UDP|ICMP|\b([1-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-2])\b`), "only TCP, UDP, ICMP and 1-252 are valid values.")),
+							StateFunc:        ProtocolStateFunc,
 						},
 						"port_range": {
 							Type:             schema.TypeString,
@@ -76,6 +77,7 @@ func resourceNcloudAccessControlGroupRule() *schema.Resource {
 							Type:             schema.TypeString,
 							Required:         true,
 							ValidateDiagFunc: ToDiagFunc(validation.StringMatch(regexp.MustCompile(`TCP|UDP|ICMP|\b([1-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-2])\b`), "only TCP, UDP, ICMP and 1-252 are valid values.")),
+							StateFunc:        ProtocolStateFunc,
 						},
 						"port_range": {
 							Type:             schema.TypeString,
@@ -155,10 +157,12 @@ func resourceNcloudAccessControlGroupRuleRead(d *schema.ResourceData, meta inter
 	for _, r := range rules {
 		var protocol string
 
+		// 테라폼 코드에서 6(TCP), 17(UDP)로 생성된 상태일 때 Protocol Code 로 Set 되기 때문에 Diff 발생
+		// 그냥 6, 17 입력시 코드로 입력하라고 에러 출력
 		if allowedProtocolCodes[*r.ProtocolType.Code] {
 			protocol = *r.ProtocolType.Code
 		} else {
-			protocol = strconv.Itoa(ProtocolMap[*r.ProtocolType.Code])
+			protocol = strconv.Itoa(int(*r.ProtocolType.Number))
 		}
 
 		m := map[string]interface{}{
@@ -266,6 +270,11 @@ func updateAccessControlGroupRule(d *schema.ResourceData, config *ProviderConfig
 	os := o.(*schema.Set)
 	ns := n.(*schema.Set)
 
+	logResponse("yoogle-old : %s", os.List())
+	logResponse("yoogle-new : %s", ns.List())
+
+	ns.List()
+
 	add := ns.Difference(os).List()
 	remove := os.Difference(ns).List()
 
@@ -298,6 +307,10 @@ func updateAccessControlGroupRule(d *schema.ResourceData, config *ProviderConfig
 
 	return nil
 }
+
+//func AccessControlGroupRuleExpand(set *schema.Set) *schema.Set {
+//
+//}
 
 func addAccessControlGroupRule(d *schema.ResourceData, config *ProviderConfig, ruleType string, accessControlGroup *vserver.AccessControlGroup, accessControlGroupRule []*vserver.AddAccessControlGroupRuleParameter) error {
 	var reqParams interface{}
@@ -462,4 +475,23 @@ var allowedProtocolCodes = map[string]bool{
 	"TCP":  true,
 	"UDP":  true,
 	"ICMP": true,
+}
+
+var allowedProtocolNumbers = map[int]string{
+	6:  "TCP",
+	17: "UDP",
+	1:  "ICMP",
+}
+
+func ProtocolStateFunc(v interface{}) string {
+	switch v := v.(type) {
+	case string:
+		if number, err := strconv.Atoi(v); err == nil {
+			if code, ok := allowedProtocolNumbers[number]; ok {
+				return code
+			}
+		}
+		return v
+	}
+	return ""
 }
