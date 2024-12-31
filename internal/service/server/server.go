@@ -271,6 +271,36 @@ func ResourceNcloudServer() *schema.Resource {
 				Computed:   true,
 				Deprecated: "This field no longer support",
 			},
+			"block_storage_mapping": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Computed: true,
+				ForceNew: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"snapshot_instance_no": {
+							Type:     schema.TypeString,
+							Required: true,
+							ForceNew: true,
+						},
+						"order": {
+							Type:     schema.TypeInt,
+							Required: true,
+							ForceNew: true,
+						},
+						"block_storage_size": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+						},
+						"block_storage_volume_type_code": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -521,6 +551,34 @@ func createVpcServerInstance(d *schema.ResourceData, config *conn.ProviderConfig
 			}
 
 			reqParams.NetworkInterfaceList = append(reqParams.NetworkInterfaceList, niParam)
+		}
+	}
+
+	if blockStorageMappingList, ok := d.GetOk("block_storage_mapping"); ok {
+		for _, vi := range blockStorageMappingList.([]interface{}) {
+			m := vi.(map[string]interface{})
+			order := m["order"].(int)
+			snapshotInstanceNo := m["snapshot_instance_no"].(string)
+			blockStorageSize := m["block_storage_size"].(string)
+			blockStorageVolumeTypeCode := m["block_storage_volume_type_code"].(string)
+
+			// blockStorageSnapshot, err := GetBlockStorageSnapshot(d, config, snapshotInstanceNo)
+			// if err != nil {
+			// 	return nil, err
+			// }
+
+			// if networkInterface == nil {
+			// 	return nil, fmt.Errorf("no matching network interface [%s] found", networkInterfaceNo)
+			// }
+
+			bsmParam := &vserver.BlockStorageMappingParameter{
+				Order:                      ncloud.Int32(int32(order)),
+				SnapshotInstanceNo:         ncloud.String(snapshotInstanceNo),
+				BlockStorageSize:           ncloud.String(blockStorageSize),
+				BlockStorageVolumeTypeCode: ncloud.String(blockStorageVolumeTypeCode),
+			}
+
+			reqParams.BlockStorageMappingList = append(reqParams.BlockStorageMappingList, bsmParam)
 		}
 	}
 

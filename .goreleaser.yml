@@ -1,3 +1,4 @@
+version: 2
 # Visit https://goreleaser.com for documentation on how to customize this
 # behavior.
 before:
@@ -12,8 +13,8 @@ builds:
     ldflags:
       - '-s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X {{ replace .GitURL "https://" "" }}/ncloud.version={{ .Version }}'
     goos:
-      - freebsd
-      - windows
+      # - freebsd
+      # - windows
       - linux
       - darwin
     goarch:
@@ -31,20 +32,20 @@ archives:
 checksum:
   name_template: "{{ .ProjectName }}_{{ .Version }}_SHA256SUMS"
   algorithm: sha256
-signs:
-  - artifacts: checksum
-    args:
-      # if you are using this is a GitHub action or some other automated pipeline, you
-      # need to pass the batch flag to indicate its not interactive.
-      - "--batch"
-      - "--local-user"
-      - "{{ .Env.GPG_FINGERPRINT }}" # set this environment variable for your signing key
-      - "--output"
-      - "${signature}"
-      - "--detach-sign"
-      - "${artifact}"
+# signs:
+#   - artifacts: checksum
+#     args:
+#       # if you are using this is a GitHub action or some other automated pipeline, you
+#       # need to pass the batch flag to indicate its not interactive.
+#       - "--batch"
+#       - "--local-user"
+#       - "{{ .Env.GPG_FINGERPRINT }}" # set this environment variable for your signing key
+#       - "--output"
+#       - "${signature}"
+#       - "--detach-sign"
+#       - "${artifact}"
 release:
   # Visit your project's GitHub Releases page to publish this release.
   draft: true
 changelog:
-  skip: true
+  disable: true
