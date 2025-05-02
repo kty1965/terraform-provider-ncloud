@@ -562,14 +562,14 @@ func createVpcServerInstance(d *schema.ResourceData, config *conn.ProviderConfig
 			blockStorageSize := m["block_storage_size"].(string)
 			blockStorageVolumeTypeCode := m["block_storage_volume_type_code"].(string)
 
-			// blockStorageSnapshot, err := GetBlockStorageSnapshot(d, config, snapshotInstanceNo)
-			// if err != nil {
-			// 	return nil, err
-			// }
+			blockStorageSnapshot, err := GetVpcBlockStorageSnapshotDetail(config, snapshotInstanceNo)
+			if err != nil {
+				return nil, err
+			}
 
-			// if networkInterface == nil {
-			// 	return nil, fmt.Errorf("no matching network interface [%s] found", networkInterfaceNo)
-			// }
+			if blockStorageSnapshot == nil {
+				return nil, fmt.Errorf("no matching network interface [%s] found", snapshotInstanceNo)
+			}
 
 			bsmParam := &vserver.BlockStorageMappingParameter{
 				Order:                      ncloud.Int32(int32(order)),
